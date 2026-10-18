@@ -5,7 +5,7 @@ const money = (value: number) => new Intl.NumberFormat("pt-BR", { style: "curren
 
 export default function BudgetCalculator() {
   const [monthly, setMonthly] = useState(5000);
-  const [price, setPrice] = useState(197);
+  const [price, setPrice] = useState(297);
   const [variable, setVariable] = useState(5);
   const [fee, setFee] = useState(5);
   const [sales, setSales] = useState(0);
