@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import IndustrySelector from "@/components/IndustrySelector";
+import { type IndustryOption, inferBusinessEngine } from "@/lib/industry-catalog";
 import {
   AiPlatform, blankProfile, installationSteps, makeDemoInstructions,
   niches, OfficeProfile, platformLabels,
@@ -29,12 +31,28 @@ export default function OfficeBuilder() {
   const [step, setStep] = useState(0);
   const [platform, setPlatform] = useState<AiPlatform>("chatgpt");
   const [copyMessage, setCopyMessage] = useState("");
-  const niche = niches.find((item) => item.id === profile.nicheId) || niches[0];
+  const niche = niches.find((item) => item.id === profile.nicheId) || niches.find(item => item.id === "servicos")!;
   const currentPreview = useMemo(() => makeDemoInstructions(profile, platform), [profile, platform]);
   const canAdvance = profile.businessName.trim().length >= 2 && profile.services.trim().length >= 4;
 
   function update<K extends keyof OfficeProfile>(key: K, value: OfficeProfile[K]) {
     setProfile(previous => ({ ...previous, [key]: value }));
+    setCopyMessage("");
+  }
+
+
+  function setIndustryText(value: string) {
+    setProfile(previous => ({ ...previous, industryName: value, industryCode: "", nicheId: inferBusinessEngine(value) }));
+    setCopyMessage("");
+  }
+
+  function chooseIndustry(industry: IndustryOption) {
+    setProfile(previous => ({
+      ...previous,
+      industryName: industry.name,
+      industryCode: industry.code ? industry.source + ": " + industry.code : "",
+      nicheId: industry.engine,
+    }));
     setCopyMessage("");
   }
 
@@ -72,14 +90,16 @@ export default function OfficeBuilder() {
     {step === 0 && <div className="wizard-body">
       <h3>Qual é o tipo de negócio?</h3>
       <p>Um mesmo motor de IA, ajustado aos fluxos de trabalho de cada segmento.</p>
-      <div className="niche-select-grid">
-        {niches.map(item => <button type="button" className={`niche-choice ${profile.nicheId === item.id ? "selected" : ""}`} key={item.id} onClick={() => update("nicheId", item.id)} aria-pressed={profile.nicheId === item.id}>
-          <span className={`niche-choice-mark ${item.accent}`}>{item.initials}</span>
-          <span className="niche-choice-text"><strong>{item.name}</strong><small>{item.description}</small></span>
-          <span className="choice-indicator">{profile.nicheId === item.id ? "●" : "○"}</span>
-        </button>)}
+      <IndustrySelector
+        value={profile.industryName}
+        selectionCode={profile.industryCode}
+        onInput={setIndustryText}
+        onSelect={chooseIndustry}
+      />
+      <div className="wizard-actions">
+        <span>Escolha uma sugestão ou escreva o nome do seu segmento.</span>
+        <button className="primary-link" type="button" disabled={profile.industryName.trim().length < 2} onClick={() => setStep(1)}>Continuar <span>→</span></button>
       </div>
-      <div className="wizard-actions"><span>6 segmentos disponíveis nesta demonstração.</span><button className="primary-link" type="button" onClick={() => setStep(1)}>Continuar <span>→</span></button></div>
     </div>}
     {step === 1 && <div className="wizard-body">
       <h3>Vamos conhecer sua empresa.</h3>
